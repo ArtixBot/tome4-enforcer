@@ -26,10 +26,10 @@ newBirthDescriptor{
 	desc = {
 		"Enforcers master the steamgun and shield to keep the peace.",
 		"They sacrifice raw burst power and mobility for excellent survivability and crowd control.",
-		"Their most important stats are: Strength, Dexterity, and Cunning.",
+		"Their most important stats are: Strength and Dexterity.",
 		"#GOLD#Stat modifiers:",
-		"#LIGHT_BLUE# * +3 Strength, +3 Dexterity, +0 Constitution",
-		"#LIGHT_BLUE# * +0 Magic, +0 Willpower, +3 Cunning",
+		"#LIGHT_BLUE# * +4 Strength, +4 Dexterity, +0 Constitution",
+		"#LIGHT_BLUE# * +0 Magic, +0 Willpower, +1 Cunning",
 		"#GOLD#Life per level:#LIGHT_BLUE# 4",
 	},
 	locked = function(birther) return birther:isDescriptorSet("world", "Orcs") or profile.mod.allow_build.orcs_tinker_eyal end,

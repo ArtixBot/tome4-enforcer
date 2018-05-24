@@ -25,11 +25,11 @@ newTalent{
 	require = steamreq1,
 	mode = "sustained",
 	points = 5,
-	cooldown = 10,
+	cooldown = 14,
 	sustain_steam = 15,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
-	getBlock = function(self, t) return self:combatTalentSteamDamage(t, 20, 250) end,
+	getBlock = function(self, t) return self:combatTalentSteamDamage(t, 20, 150) end,
 	getStunDuration = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
 	activate = function(self, t)
 		local shield = self:hasShield()
@@ -53,7 +53,7 @@ newTalent{
 	callbackOnBlock = function(self, t, eff, dam, type, src)
 		if self.block then
 			game.logSeen(src, "Automated Kinetic Defense retaliates against %s!", src.name:capitalize())
-			src:setEffect(src.EFF_STUNNED, t.getStunDuration(self, t), {apply_power=self:combatAttackStr()})
+			src:setEffect(src.EFF_STUNNED, t.getStunDuration(self, t), {apply_power=self:combatSteampower()})
 		end
 	end,
 	info = function(self, t)
@@ -72,7 +72,7 @@ newTalent{
 	require = steamreq2,
 	mode = "sustained",
 	points = 5,
-	cooldown = 10,
+	cooldown = 14,
 	sustain_steam = 15,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
@@ -99,7 +99,7 @@ newTalent{
 			self:project(tg, self.x, self.y, function(px, py)
 				local target = game.level.map(px, py, Map.ACTOR)
 				if not target then return end
-				target:setEffect(target.EFF_DAZED, t.getDazeDur(self, t), {apply_power=self:combatAttackStr()})
+				target:setEffect(target.EFF_DAZED, t.getDazeDur(self, t), {apply_power=self:combatSteampower()})
 			end)
 			
 			game:playSoundNear(self, "talents/earth")
@@ -121,13 +121,13 @@ newTalent{
 	require = steamreq3,
 	mode = "sustained",
 	points = 5,
-	cooldown = 10,
+	cooldown = 14,
 	sustain_steam = 15,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
-	getDamageOnMeleeHit = function(self, t) return self:combatTalentScale(t, 21, 65) end,
+	getDamageOnMeleeHit = function(self, t) return self:combatTalentScale(t, 15, 40) end,
 	getDebuffDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
-	
+	getCripplePow = function(self, t) return self:combatTalentScale(t, 14, 28) / 100 end,
 	target = function(self, t)
 		return {type="ball", range=0, radius=1, selffire=false, talent=t}
 	end,
@@ -154,8 +154,8 @@ newTalent{
 			self:project(tg, self.x, self.y, function(px, py)
 				local target = game.level.map(px, py, Map.ACTOR)
 				if not target then return end
-				target:setEffect(target.EFF_DISARMED, t.getDebuffDur(self, t), {apply_power=self:combatAttackStr()})
-				target:setEffect(target.EFF_BLINDED, t.getDebuffDur(self, t), {apply_power=self:combatAttackStr()})
+				target:setEffect(target.EFF_SUNDER_ARMS, t.getDebuffDur(self, t), {power=6*self:getTalentLevel(t), apply_power=self:combatSteampower()})
+				target:setEffect(target.EFF_CRIPPLE, t.getDebuffDur(self, t), {speed=t.getCripplePow(self, t), apply_power=self:combatSteampower()})
 			end)
 		end
 		return
@@ -163,14 +163,14 @@ newTalent{
 	info = function(self, t)
 		return ([[Destabilizes your heat tank, making it violently react to any sudden impact with a burst of scalding steam.
 		All melee attackers take %d fire damage when they hit you.
-		Additionally, whenever you block, the sudden motion causes scalding steam to erupt around you, disarming and blinding adjacent units for %d turns.
+		Additionally, whenever you block, the sudden motion causes scalding steam to erupt around you, reducing the accuracy of adjacent units by %d and their melee, spellcasting, and mental speeds by %d%% for %d turns.
 		You are immune to the steam's effects (having endured it for so long).
-		Effects increase with Steampower.]]):format(t.getDamageOnMeleeHit(self, t), t.getDebuffDur(self, t))
+		Effects increase with Steampower.]]):format(t.getDamageOnMeleeHit(self, t), 6 * self:getTalentLevel(t), t.getCripplePow(self, t)*100, t.getDebuffDur(self, t))
 	end,
 }
 
 newTalent{
-	-- Sustained. Automatically block every Xth incoming attack, triggering all block synergies.
+	-- Sustained. Automatically block every turn.
 	-- Whenever you block, a random ball of lightning strikes a target in range, dealing damage to target and all units around it.
 	name = "Galvanic Discharge",
 	type = {"steamtech/shield-augments", 4},
@@ -178,37 +178,26 @@ newTalent{
 	require = steamreq4,
 	mode = "sustained",
 	points = 5,
-	cooldown = 10,
+	cooldown = 24,
+	fixed_cooldown= true,
 	range = 8,
-	sustain_steam = 15,
+	drain_steam = 22,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
-	getDebuffDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
-	getDamage = function(self, t) return self:combatTalentSteamDamage(t, 25, 100) end,
+	getDamage = function(self, t) return self:combatTalentSteamDamage(t, 65, 140) end,
 	getTargetCount = function(self, t) return 1 end,
-	getAutoCd = function(self, t) return math.ceil(self:combatTalentLimit(t, 10, 22, 12)) end, -- Limit >10
 	target = function(self, t)
 		return {type="ball", range=0, radius=1, selffire=false, talent=t}
 	end,
 	activate = function(self, t)
-		autoShieldCooldown = t.getAutoCd(self, t)
-		local ret = {
-		}
-		return ret
+		return true
 	end,
 	deactivate = function(self, t, p)
 		return true
 	end,
-	callbackOnMeleeHit = function(self, t, target, dam)
-		if autoShieldCooldown == 0 then
-			autoShieldCooldown = t.getAutoCd(self, t)
-			self:forceUseTalent(self.T_BLOCK, {ignore_energy=true, ignore_cd = true, silent = true})
-			game.logSeen(self, "#LIGHT_BLUE#%s's shield instantly reacts to the blow!", self.name:capitalize())
-			return true
-		else
-			autoShieldCooldown = autoShieldCooldown - 1
-		return false
-		end
+	callbackOnActBase = function(self, t)
+		self:forceUseTalent(self.T_BLOCK, {ignore_energy=true, ignore_cd = true, silent = true})
+		return
 	end,
 	callbackOnTalentPost = function(self, t, ab, ret)
 		if ab.id == self.T_BLOCK and ret == true then
@@ -239,10 +228,10 @@ newTalent{
 	end,
 	info = function(self, t)
 		local printAutoCd = autoShieldCooldown
-		return ([[Install galvanic capacitators into your shield, allowing it to automatically defend against attacks.
-		After taking %d melee hits, you instinctively and instantly block (even if it's on cooldown).
-		Additionally, whenever you block, the installed capacitators overload; lightning electrocutes a random enemy within 8 tiles of you.
-		The target and all units adjacent to it take %d lightning damage.
-		Effects improve with Steampower.]]):format(t.getAutoCd(self, t), t.getDamage(self, t), t.getDebuffDur(self, t))
+		return ([[Overloads your shield's tinkers, boosting shielding capabilities beyond human capacity.
+		While active, you instantly block at the start of every turn (even if block is on cooldown).
+		Additionally, whenever you block, the installed tinkers burst with power; lightning electrocutes a random enemy within 8 tiles of you.
+		The target and all units adjacent to it take %d lightning damage, scaling with Steampower.
+		Rapidly drains steam while active (-22/turn).]]):format(t.getDamage(self, t))
 	end,
 }

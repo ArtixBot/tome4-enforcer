@@ -19,8 +19,8 @@
 
 newTalent{
 	-- Fire one of three grenade types.
-	-- Flashbang: Stun and blind.
-	-- Noxious Gas: Damage and global speed reduction.
+	-- Flashbang: Blind and decaying global speed slow.
+	-- Noxious Gas: Reduces outgoing damage. All talents have a chance to fail.
 	-- Shrapnel: Bleed.
 	name = "Grenade Launcher",
 	type = {"steamtech/missile-fire", 1},
@@ -46,10 +46,10 @@ newTalent{
 		return true
 	end,
 	info = function(self, t)
-		return ([[Equipped with you at all times is the steam-powered "Grenade Launcher," nominally used for crowd control purposes.
-		The GC-001 comes equipped with three tinkers: Flashbang, Noxious Gas, and Shrapnel.
+		return ([[Equipped with you at all times is the GC-001, a steam-powered "remote propellent device."
+		The GC-001 is capable of firing three grenades: Flashbang, Noxious Gas, and Shrapnel.
 		
-		Flashbang: Stuns and blinds targets in a radius-XX circle for XX turns.
+		Flashbang: Blinds and reduces global speed of hit targets by XX (effects decay by XX each turn) in a radius-XX circle for XX turns.
 		
 		Noxious Gas: Disperses crippling gases in a radius-XX circle. All units currently within the area of effect deal XX reduced damage and have XX reduced global speed. The gas lingers for XX turns.
 		
@@ -115,13 +115,13 @@ newTalent{
 		return true
 	end,
 	info = function(self, t)
-		return ([[Enhance the next grenade you fire with volatile elements, augmenting its effects.
+		return ([[Augments the effects of your grenades, adding the following effects to hit targets:
 		
 		Flashbang: Incorporates incendiary elements, causing all hit targets to burn for XX damage over XX turns.
 		
-		Noxious Gas: Incorporates antimagic elements, silencing all targets in the area of effect and burning XX arcane resource(s) per turn.
+		Noxious Gas: Incorporates antimagic gifts, silencing all targets in the area of effect and burning XX arcane resource(s) per turn.
 		
-		Shrapnel: Overloads the grenade with excessive steam, increasing area of effect by XX tiles and shredding XX Armor for XX turns.
+		Shrapnel: Incorporates voratun shards, shredding XX Armor and reducing Physical Save by XX.
 		
 		Effects increase with Steampower.]])
 	end,
@@ -132,58 +132,41 @@ newTalent{
 	type = {"steamtech/missile-fire", 3},
 	points = 5,
 	cooldown = 20,
-	steam = 30,
+	steam = function(self, t) return self:getSteam() end,
 	require = steamreq3,
-	tactical = { CURE = function(self, t, target)
-		local nb = 0
-		for eff_id, p in pairs(self.tmp) do
-			local e = self.tempeffect_def[eff_id]
-			if e.status == "detrimental" and e.type == "mental" then nb = nb + 1 end
-		end
-		return nb
-	end},
-	no_energy = true,
-	requires_target = true,
-	range = 5,
-	getNum = function(self, t) return math.floor(self:combatTalentScale(t, 1, 5)) end,
+	tactical = { DISABLE = 2, ATTACKAREA = { FIRE = 2 } },
+	range = 0,
+	radius = 5,
+	getFactor = function(self, t) return self:combatScale(math.min(self:getSteam(), 100), 15, 0, 100, 100, 1) / 100 end,
+	getDamage = function(self, t) return self:combatTalentSteamDamage(t, 180, 500) * (t.getFactor(self, t)) end,
+	target = function(self, t)
+		return {type="cone", range=self:getTalentRange(t), radius=self:getTalentRadius(t), selffire=false, talent=t}
+	end,
 	action = function(self, t)
-
-		-- Pick valid targets for transfer attempt
-		local tgts = {}
-		self:project({type="ball", radius=5}, self.x, self.y, function(px, py)
-			local act = game.level.map(px, py, Map.ACTOR)
-			if not act or self:reactionToward(act) >= 0 then return end
-			tgts[#tgts+1] = act
-		end)
-
-		-- Transfer the debuffs before they're removed in the filter function
-		local cleansed = self:removeEffectsFilter(function(eff)
-			if eff.status == "detrimental" and eff.type == "mental" then
-				if #tgts > 0 then
-					local target = rng.table(tgts)
-					local newp = self:copyEffect(eff.id)
-					newp.src = self
-					newp.apply_power = self:combatSteampower()
-					target:setEffect(eff.id, newp.dur, newp)
-				end
-				return true
-			else
-				return false
-			end
-		end, t.getNum(self, t))
+		local tg = self:getTalentTarget(t)
+		local x, y = self:getTarget(tg)
+		if not x or not y then return nil end
+		self:project(tg, x, y, DamageType.DIG, 1)
+		self:project(tg, x, y, DamageType.FLAMESHOCK, {dam=t.getDamage(self, t), dur=4, apply_power = 10000})
+		game.level.map:particleEmitter(self.x, self.y, tg.radius, "breath_fire", {radius=tg.radius, tx=x-self.x, ty=y-self.y})
+		game:playSoundNear(self, "talents/fireflash")
+		
+		self:knockback(x, y, 3)
 		
 		return true
 	end,
 	info = function(self, t)
-		return ([[Utilize all your steam reserves to deliver a rocket-powered shrapnel blast from the GC-001, dealing XX damage and causing targets to burn for XX damage over XX turns in a XX-radius cone.
-		The sheer force of the blast pushes you back XX tiles.
-		Damage scales based on remaining Steam reserves and Steampower.]])
+		return ([[Utilize all your steam reserves to deliver a radius-5 conal shrapnel blast from the GC-001, destroying all diggable terrain in its path.
+		Hit targets are stunned and burn for %d damage over 4 turns. This effect bypasses resistances.
+		The sheer blast force knocks you back 3 tiles.
+		
+		Damage scales based on your current steam reserves, reaching 100%% efficiency at 100 Steam (#YELLOW#currently: %d%%#WHITE#) and increases with Steampower.]]):format(t.getDamage(self, t), 100 * t.getFactor(self, t))
 	end,
 }
 
 newTalent{
 	-- Buff which removes all grenade cooldowns while active.
-	name = "Bombardment",
+	name = "Catalyzing Agents",
 	type = {"steamtech/missile-fire", 4},
 	points = 5,
 	require = steamreq4,
@@ -214,10 +197,9 @@ newTalent{
 		return false
 	end,
 	info = function(self, t)
-		return ([[Overcharge your GC-001 to dangerous levels for a short time.
-		For XX turns, all grenades are empowered and all grenade cooldowns are removed.
+		return ([[Installs an air-purifying catalyzer to the GC-001, causing anything fired from it to emit medicinal fumes.
+		Firing a grenade releases some fumes, granting a stack of Invigoration (max 3). Performing Blastback generates max stacks.
 		
-		Utilizing Blastback while Bombardment is active disables the GC-001 from sheer heat strain; all Grenade skills are disabled for 50 turns and you take XX self-damage.
-		However, Blastback gains XX increased range, deals +XX damage, and gains 100% fire resistance penetration.]])
+		Each stack of Invigoration grants +XX health regeneration (max: +XX) and +XX to all saves and powers (max: +XX). Each stack of Invigoration lasts XX turns.]])
 	end,
 }

@@ -30,8 +30,8 @@ newTalent{
 	callbackOnRest = function(self, t) self:forceUseTalent(t.id, {ignore_cooldown=true, ignore_energy=true}) end,
 	callbackOnRun = function(self, t) self:forceUseTalent(t.id, {ignore_cooldown=true, ignore_energy=true}) end,
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
-	getPassives = function(self, t) return self:combatTalentStatDamage(t, "dex", 6, 22) end,
-	getSight = function(self, t) return math.floor(self:combatTalentScale(t, 2, 4, "log")) end,
+	getPassives = function(self, t) return self:combatTalentStatDamage(t, "str", 6, 22) end,
+	getAtk = function(self, t) return self:combatTalentScale(t, 14, 47) end,
 	getReload = function(self, t) return math.floor(self:combatTalentScale(t, 3, 5, "log")) end,
 	getAttackSpeed = function(self, t) return math.floor(self:combatTalentLimit(t, 50, 15, 45))/100 end,
 	activate = function(self, t)
@@ -41,32 +41,31 @@ newTalent{
 			return nil
 		end
 		
-		local sight = t.getSight(self, t)
 		local ret = {
-			sightA = self:addTemporaryValue("sight", sight),
-			sightB = self:addTemporaryValue("infravision", sight),
-			sightC = self:addTemporaryValue("heightened_senses", sight),
-			sightD = self:addTemporaryValue("archery_bonus_range", sight),
+			acc = self:addTemporaryValue('combat_atk', t.getAtk(self, t)),
 			ammo = self:addTemporaryValue('ammo_mastery_reload', t.getReload(self, t)),
 			speed = self:addTemporaryValue("combat_physspeed", t.getAttackSpeed(self, t)),
+			nomove = self:addTemporaryValue("never_move", 1),
 		}
 		return ret
 	end,
 	deactivate = function(self, t, p)
-		self:removeTemporaryValue("sight", p.sightA)
-		self:removeTemporaryValue("infravision", p.sightB)
-		self:removeTemporaryValue("heightened_senses", p.sightC)
-		self:removeTemporaryValue("archery_bonus_range", p.sightD)
+		self:removeTemporaryValue("combat_atk", p.acc)
 		self:removeTemporaryValue("ammo_mastery_reload", p.ammo)
 		self:removeTemporaryValue("combat_physspeed", p.speed)
+		self:removeTemporaryValue("never_move", p.nomove)
 		return true
+	end,
+	passives = function(self, t, p)
+		self:talentTemporaryValue(p, "combat_armor", t.getPassives(self, t) + 5)
+		self:talentTemporaryValue(p, "combat_def", t.getPassives(self, t) + 5)
 	end,
 	info = function(self, t)
 		return ([[Deploy your shield in preparation for the battle ahead, rooting yourself in place.
-		While active, increases your attack speed by %d%%, reload rate by %d, and weapon attack and sight range by %d tiles.
-		Even when not active, this ability passively increases Defense and Armor by XX.
-		The increase in attack speed scales with Strength, and passive Defense and Armor scale with Dexterity.]]):
-		format(t.getAttackSpeed(self, t)*100, t.getReload(self, t), t.getSight(self, t))
+		While active, increases your attack speed by %d%%, reload rate by %d, and accuracy by %d.
+		Learning this technique permanently increases Defense and Armor by %d (even while not sustained). These bonuses scale with Strength.
+		This talent is disabled automatically on rest or run.]]):
+		format(t.getAttackSpeed(self, t)*100, t.getReload(self, t), t.getAtk(self, t), t.getPassives(self, t) + 5)
 	end,
 }
 
@@ -77,93 +76,122 @@ newTalent{
 	type = {"technique/steamshield", 2},
 	require = techs_dex_req2,
 	points = 5,
-	cooldown = 30,
-	steam = 30,
+	cooldown = 14,
+	steam = 25,
 	range = 0,
-	radius = function(self, t) return math.floor(self:combatTalentScale(t, 4, 8)) end,
-	getDuration = function(self, t) return math.floor(self:combatTalentScale(t, 5, 7)) end,
+	radius = 1,
+	tactical = { ATTACKAREA = { weapon = 3 } },
+	random_ego = "attack",
 	target = function(self, t)
-		return {type="ball", range=self:getTalentRange(t), selffire=false, radius=1}
+		local weapon, ammo = self:hasArcheryWeapon()
+		return {type="ball", radius=self:getTalentRadius(t), range=self:getTalentRange(t), selffire=false, display=self:archeryDefaultProjectileVisual(weapon, ammo)}
 	end,
-	on_pre_use = function(self, t, silent) if not self:hasDualWeapon() then if not silent then game.logPlayer(self, "You require two weapons to use this talent.") end return false end return true end,
-	tactical = { ATTACKAREA = 3 },
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") then if not silent then game.logPlayer(self, "You require a steamgun and shield for this talent.") end return false end return true end,
+	getDamage = function(self, t) return self:combatTalentWeaponDamage(t, 1.0, 1.25) end,
+	getKnockback = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 5.0)) end,
+	archery_onhit = function(self, t, target, x, y)
+		if target:canBe("knockback") and target:checkHit(self:combatAttack(), target:combatMentalResist(), 0, 95, 5) then
+			target:knockback(self.x, self.y, t.getKnockback(self, t))
+		end
+	end,
 	action = function(self, t)
-		local weapon, offweapon = self:hasDualWeapon()
-		if not weapon then
-			game.logPlayer(self, "Symphonic Whirl can only be used while dual wielding.")
+		local shield = self:hasShield()
+		if not shield then
+			game.logPlayer(self, "You cannot use Circle Fire without a steamgun and shield!")
 			return nil
 		end
-		
-		local tg = self:getTalentTarget(t)
-		
-		self:project(tg, self.x, self.y, function(px, py, tg, self)
-			local target = game.level.map(px, py, Map.ACTOR)
-			if target and target ~= self then
-				self:attackTarget(target, nil, self:combatTalentWeaponDamage(t, 0.47, 1.00), true)
-				target:setEffect(target.EFF_TEMPO_DISRUPTION, 2, {})
-			end
-		end)
 
-		self:addParticles(Particles.new("meleestorm", 1, {}))
+		local tg = self:getTalentTarget(t)
+		local x, y, target = self:getTarget(tg)
+		if not x or not y then return nil end
+		local _ _, x, y = self:canProject(tg, x, y)
+		
+		local target = game.level.map(x, y, game.level.map.ACTOR)
+		
+		if not target then return end
+		local targets = self:archeryAcquireTargets(tg, {x=target.x, y=target.y})
+		
+		if not targets then return nil end
+		local dam = t.getDamage(self,t)
+		self:archeryShoot(targets, t, {type = "hit", primaryeffect=tg.radius, primarytarget=target}, {mult=dam, one_shot=true, type="steamgun"})
+		
+		self:forceUseTalent(self.T_BLOCK, {ignore_energy=true, ignore_cd = true, silent = true})
+
 		return true
 	end,
 	info = function(self, t)
-		return ([[Rapidly fire your weapon, allowing a basic attack against all adjacent enemies but at reduced accuracy (-XX). This startles enemies, attempting to push them XX tiles.
-		Immediately afterwards, you enter a blocking stance (even if Block is on cooldown).
-		Chance to push enemies scales with Accuracy.]])
+		return ([[Rapidly fire your weapon, performing a basic ranged shot against all adjacent enemies for %d%% weapon damage.
+		This startles them, which pushes them back %d tiles if they fail a mental save.
+		Immediately afterwards, you instantly enter a blocking stance (even if Block is on cooldown).
+		Chance to push enemies increases with Accuracy.]]):format(t.getDamage(self, t)*100, t.getKnockback(self, t))
 	end,
 }
 
 newTalent{
 	-- Shoot at an enemy with increased critical chance; then, perform a shield attack against an adjacent target.
-	-- If you target the same enemy with both attacks, inflicts stun and crippled.
+	-- If you target the same enemy with both attacks, inflicts stun.
 	name = "Slamshot",
 	type = {"technique/steamshield", 3},
-	require = techs_dex_req3,
 	points = 5,
-	cooldown = 12,
+	cooldown = 10,
 	steam = 25,
+	require = techs_dex_req3,
+	range = steamgun_range,
 	requires_target = true,
-	is_melee = true,
-	on_pre_use = function(self, t, silent) if not self:hasDualWeapon() then if not silent then game.logPlayer(self, "You require two weapons to use this talent.") end return false end return true end,
-	target = function(self, t) return {type="hit", range=self:getTalentRange(t)} end,
-	getDuration = function(self, t) return math.floor(self:combatTalentScale(t, 3, 5)) end,
+	tactical = { ATTACK = { weapon = 2 }, DISABLE = { stun = 2 }, },
+	target = function(self, t) return {type="hit", range=1} end,
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") then if not silent then game.logPlayer(self, "You require a steamgun for this talent.") end return false end return true end,
+	getDur = function(self, t) return self:combatTalentLimit(t, 6, 1, 2.5) end,
+	getShieldDamage = function(self, t) return self:combatTalentWeaponDamage(t, 1.2, 1.8) end,
+	getDebuffDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
+	getCripplePow = function(self, t) return self:combatTalentScale(t, 26, 50) / 100 end,
+	archery_onreach = function(self, t, target, x, y)
+		self.turn_procs.auto_phys_crit = true
+	end,
+	archery_onhit = function(self, t, target, x, y)
+		target:setEffect(target.EFF_CRIPPLE, t.getDebuffDur(self, t), {speed=t.getCripplePow(self, t), apply_power=self:combatAttack()})
+	end,
 	action = function(self, t)
-		local weapon, offweapon = self:hasDualWeapon()
-		if not weapon then
-			game.logPlayer(self, "Cadenza can only be used while dual wielding.")
-			return nil
-		end
-		
-		local tg = self:getTalentTarget(t)
-		local x, y, target = self:getTarget(tg)
-		if not target or not self:canProject(tg, x, y) then return nil end
-		local hit = self:attackTarget(target, nil, self:combatTalentWeaponDamage(t, 1.26, 1.61), true)
+		local targetmode_trigger_hotkey
+		if self.player then targetmode_trigger_hotkey = game.targetmode_trigger_hotkey end
 
-		-- Attempts to disarm.
-		if hit then
-			if target:canBe("disarmed") then
-				target:setEffect(target.EFF_DISARMED, t.getDuration(self, t), {apply_power=self:combatPhysicalpower()})
-			else
-				game.logSeen(target, "%s is not disarmed!", target.name:capitalize())
-			end
+		local targets = self:archeryAcquireTargets(nil, {no_energy=true, type="steamgun"})
+		if not targets then return end
+	
+		self:archeryShoot(targets, t, nil, {type="steamgun"})
+		self.turn_procs.auto_phys_crit = nil	
+		
+
+		-- Adapted code from Tactical Expert, located under cunning/tactical.lua. May (?) have bugs as a result.
+		-- Used to automatically terminate talent if no enemies are adjacent.
+		local nb_foes = 0
+		local act
+		for i = 1, #self.fov.actors_dist do
+			act = self.fov.actors_dist[i]
+			if act and game.level:hasEntity(act) and self:reactionToward(act) < 0 and self:canSee(act) and act["__sqdist"] <= 2 then nb_foes = nb_foes + 1 end
 		end
 		
-		-- Attempts to confuse.
-		if hit then
-			if target:canBe("confused") then
-				target:setEffect(target.EFF_CONFUSED, t.getDuration(self, t), {power=25})
+		if nb_foes <= 0 then
+			return true
+		else
+			local tg = self:getTalentTarget(t)
+			local x, y, target = self:getTarget(tg)
+			
+			if not target or not self:canProject(tg, x, y) then
+				return true
 			else
-				game.logSeen(target, "%s resisted the confusion!", target.name:capitalize())
+				self:attackTargetWith(target, shield_combat, nil, t.getShieldDamage(self, t))
+				target:setEffect(target.EFF_STUNNED, t.getDebuffDur(self, t), {apply_power=self:combatPhysicalpower()})
 			end
-		end
-		game.level.map:particleEmitter(target.x, target.y, 1, "stalked_start")
+		end	
+		
 		return true
 	end,
 	info = function(self, t)
-		return ([[Fire with masterful accuracy, performing a ranged basic attack that has +XX increased critical chance.
-		You then follow up with a shield slam (if possible) against an adjacent enemy, dealing XX shield damage.
-		If you hit the same enemy with both attacks, the target is stunned and crippled for XX turns.]])
+		return ([[Fire at an enemy with your steamgun for 100%% weapon damage which critically strikes on hit.
+		Afterwards, perform a shield slam against an adjacent target for %d%% shield damage.
+		The shot target is crippled, reducing melee/spellcasting/mental cast speeds by %d%%; the slammed target is stunned. Both effects last %d turns.
+		The chance to cripple scales with Accuracy, and the chance to stun scales with Physical Power.]]):format(100 * t.getShieldDamage(self, t), 100 * t.getCripplePow(self, t), t.getDebuffDur(self, t))
 	end,
 }
 
@@ -174,31 +202,40 @@ newTalent{
 	type = {"technique/steamshield", 4},
 	require = techs_dex_req4,
 	points = 5,
-	cooldown = 20,
+	cooldown = 10,
 	steam = 40,
-	requires_target = true,
-	is_melee = true,
-	on_pre_use = function(self, t, silent) if not self:hasDualWeapon() then if not silent then game.logPlayer(self, "You require two weapons to use this talent.") end return false end return true end,
-	target = function(self, t) return {type="hit", range=self:getTalentRange(t)} end,
+	range = 0,
+	radius = function(self, t) return math.floor(self:combatTalentScale(t, 3, 5)) end,
+	radiusB = 1,
+	tactical = { ATTACK = { weapon = 2 }, DISABLE = { stun = 2 }, },
+	target = function(self, t)
+		return {type="cone", range=self:getTalentRange(t), selffire=false, radius=self:getTalentRadius(t)}
+	end,
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") then if not silent then game.logPlayer(self, "You require a steamgun for this talent.") end return false end return true end,
+	getShieldDamage = function(self, t) return self:combatTalentWeaponDamage(t, 1.2, 1.8) end,
+	getDebuffDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
+	archery_onhit = function(self, t, target, x, y)
+		target:setEffect(target.EFF_DAZED, t.getDebuffDur(self, t), {apply_power=self:combatAttack()})
+	end,
 	action = function(self, t)
-		local weapon, offweapon = self:hasDualWeapon()
-		if not weapon then
-			game.logPlayer(self, "Finale can only be used while dual wielding.")
-			return nil
-		end
-		
 		local tg = self:getTalentTarget(t)
 		local x, y, target = self:getTarget(tg)
-		if not target or not self:canProject(tg, x, y) then return nil end
-		local hit = self:attackTarget(target, nil, self:combatTalentWeaponDamage(t, 4.00, 6.35), true)
-		self:setEffect(self.EFF_FINALE_DEBUFF, 4, {power=0.35, apply_power=10000, no_ct_effect=true})
-		game:playSoundNear(self, "talents/breath")
-		return true
+		if not x or not y then return nil end
+		local _ _, x, y = self:canProject(tg, x, y)
+		
+		local target = game.level.map(x, y, game.level.map.ACTOR)
+		
+		if not target then return end
+		local targets = self:archeryAcquireTargets(tg, {x=target.x, y=target.y})
+		
+		if not targets then return nil end
+		local dam = t.getDamage(self,t)
+		self:archeryShoot(targets, t, {type = "hit", primaryeffect=tg.radius, primarytarget=target}, {mult=dam, one_shot=true, type="steamgun"})		return true
 	end,
 	info = function(self, t)
-		return ([[You viciously swipe your shield in an arc in front of you, dealing XX shield damage.
-		Immediately afterwards, you follow up with a custom-made piercing buckshot round, dealing XX weapon damage in a size-XX cone.
-		Slammed targets are pushed back XX tiles; shot targets are dazed for XX turns.
-		Chance to push back scales with Strength, while daze chance scales with Accuracy.]])
+		return ([[You viciously swipe your shield in an arc in front of you, dealing %d%% shield damage.
+		Immediately afterwards, you follow up with a custom-made piercing buckshot round, dealing XX damage in a radius-XX cone.
+		Slammed targets are knocked back XX tiles; shot targets are dazed for XX turns.
+		Chance to knockback scales with Strength, while daze chance scales with Accuracy.]]):format(100 * t.getShieldDamage(self, t))
 	end,
 }

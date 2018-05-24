@@ -18,15 +18,15 @@
 -- darkgod@te4.org
 
 newTalent{
-	-- Instant ability. Restores Steam and temporarily buffs max Steam capacity.
+	-- Instant ability. Restores Steam and boosts movement speed.
 	name = "Supercapacitators",
 	type = {"steamtech/reinforcement", 1},
 	require = steamreq1,
-	mode = "sustained",
 	points = 5,
 	cooldown = 10,
-	sustain_steam = 15,
+	steam = -1000,
 	tactical = { BUFF=2 },
+	no_energy = true,
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
 	getBlock = function(self, t) return self:combatTalentSteamDamage(t, 20, 250) end,
 	getStunDuration = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
@@ -57,7 +57,7 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[Supercapacitators provide a burst of steam during crucial moments.
-		Instantly restores XX steam and increases tank capacity by XX for XX turns.]])
+		Your steam tank is instantly refilled and your movement speed is increased by +XX for XX turns.]])
 	end,
 }
 
@@ -172,7 +172,7 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[Outfit a tesladoc injector to your steam generators.
-		The device jolts you whenever you are bloodied (health falls below <XX of max), instantly purging you of all negative effects and providing +XX resistance to all damage for XX turns.
+		The device jolts you whenever your health falls below <XX of max, instantly purging you of all negative effects and providing +XX resistance to all damage for XX turns.
 		This can only trigger once every XX turns.]])
 	end,
 }
@@ -212,7 +212,7 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[While Breaking Point is active, a specialized medical injector siphons a portion of your battle-generated adrenaline.
-		Gain an adrenal point every time you deal damage.
+		Gain an adrenal point every time you deal attack damage.
 		At 10 stacks, the injector provides you with a surge of adrenaline, increasing attack speed by XX and critical hit rate by XX for XX turns.
 		Breaking points are removed upon running or resting.]])
 	end,
