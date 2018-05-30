@@ -19,6 +19,7 @@
 
 -- Physical combat for Minstrel (DEX Scaling)
 newTalentType{ allow_random=true, type="technique/steamshield", name = "Steamshield combat", description = "Steamgun and shield techniques." }
+newTalentType{ allow_random=true, type="technique/suppression", name = "Suppression", generic=true, description = "Exploit the vulnerabilties exposed by enemies under fire." }
 
 -- Generic requires for techs_dex based on talent level
 techs_dex_req1 = {
@@ -91,3 +92,4 @@ techs_cun_req5 = {
 -----------------------------
 
 load("/data-enforcer/talents/techniques/steamshield.lua")
+load("/data-enforcer/talents/techniques/suppression.lua")

@@ -48,6 +48,7 @@ newBirthDescriptor{
 		-- Generic skills.
 		["technique/combat-training"]={true, 0.3},
 		["technique/conditioning"]={true, 0.3},
+		["technique/suppression"]={true, 0.3},
 		["steamtech/blacksmith"]={true, 0.2},
 	},
 	talents = {

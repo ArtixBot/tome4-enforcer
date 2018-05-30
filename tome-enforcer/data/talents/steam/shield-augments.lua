@@ -76,13 +76,14 @@ newTalent{
 	sustain_steam = 15,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
+	getAvoidPwr = function(self, t) return 3 * self:getTalentLevelRaw(t) end,
 	getDazeDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
 	target = function(self, t)
 		return {type="ball", range=0, radius=2, selffire=false, talent=t}
 	end,
 	activate = function(self, t)
-		local ret = {
-		}
+		local ret = {}
+		self:talentTemporaryValue(ret, "cancel_damage_chance", t.getAvoidPwr(self, t))
 		return ret
 	end,
 	deactivate = function(self, t, p)
@@ -108,8 +109,9 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[Augments your shield with a steam-powered kinetic reinforcer.
+		The kinetic reinforcer augments your reflexes, giving you a %d%% chance to reduce incoming damage to 0.
 		This enhances shield deployment speed so much that it allows you to emit shockwaves in a 2-tile radius around you whenever you block (by slamming said shield onto the ground).
-		Hit targets will be dazed for %d turns.]]):format(t.getDazeDur(self, t))
+		Hit targets will be dazed for %d turns.]]):format(t.getAvoidPwr(self, t), t.getDazeDur(self, t))
 	end,
 }
 

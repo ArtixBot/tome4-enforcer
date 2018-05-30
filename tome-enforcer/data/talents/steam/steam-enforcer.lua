@@ -19,7 +19,7 @@
 
 newTalentType{ allow_random=true, is_steam=true, type="steamtech/missile-fire", name = "grenades", description = "Utilize a steamtech launcher for widespread crowd-control." }
 newTalentType{ allow_random=true, is_steam=true, type="steamtech/shield-augments", name = "shield augmentation", description = "Reinforce your shield with custom tinkers for improved retaliatory capabilities." }
-newTalentType{ allow_random=true, is_steam=true, type="steamtech/reinforcement", name = "reinforcement", description = "Emergency survival tactics." }
+newTalentType{ allow_random=true, is_steam=true, type="steamtech/reinforcement", name = "reinforcement", description = "Maintaining order isn't a solo task!" }
 
 steamgun_range = Talents.main_env.archery_range
 

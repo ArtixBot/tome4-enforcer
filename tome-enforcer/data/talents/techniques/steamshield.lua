@@ -29,18 +29,12 @@ newTalent{
 	tactical = { BUFF = 3 },
 	callbackOnRest = function(self, t) self:forceUseTalent(t.id, {ignore_cooldown=true, ignore_energy=true}) end,
 	callbackOnRun = function(self, t) self:forceUseTalent(t.id, {ignore_cooldown=true, ignore_energy=true}) end,
-	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
+	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun and shield to use this talent.") end return false end return true end,
 	getPassives = function(self, t) return self:combatTalentStatDamage(t, "str", 6, 22) end,
 	getAtk = function(self, t) return self:combatTalentScale(t, 14, 47) end,
 	getReload = function(self, t) return math.floor(self:combatTalentScale(t, 3, 5, "log")) end,
 	getAttackSpeed = function(self, t) return math.floor(self:combatTalentLimit(t, 50, 15, 45))/100 end,
 	activate = function(self, t)
-		local shield = self:hasShield()
-		if not shield then
-			game.logPlayer(self, "You cannot use Protect and Serve without a shield!")
-			return nil
-		end
-		
 		local ret = {
 			acc = self:addTemporaryValue('combat_atk', t.getAtk(self, t)),
 			ammo = self:addTemporaryValue('ammo_mastery_reload', t.getReload(self, t)),
@@ -86,8 +80,8 @@ newTalent{
 		local weapon, ammo = self:hasArcheryWeapon()
 		return {type="ball", radius=self:getTalentRadius(t), range=self:getTalentRange(t), selffire=false, display=self:archeryDefaultProjectileVisual(weapon, ammo)}
 	end,
-	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") then if not silent then game.logPlayer(self, "You require a steamgun and shield for this talent.") end return false end return true end,
-	getDamage = function(self, t) return self:combatTalentWeaponDamage(t, 1.0, 1.25) end,
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") or not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun and shield for this talent.") end return false end return true end,
+	getDamage = function(self, t) return self:combatTalentWeaponDamage(t, 0.6, 0.9) end,
 	getKnockback = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 5.0)) end,
 	archery_onhit = function(self, t, target, x, y)
 		if target:canBe("knockback") and target:checkHit(self:combatAttack(), target:combatMentalResist(), 0, 95, 5) then
@@ -95,12 +89,6 @@ newTalent{
 		end
 	end,
 	action = function(self, t)
-		local shield = self:hasShield()
-		if not shield then
-			game.logPlayer(self, "You cannot use Circle Fire without a steamgun and shield!")
-			return nil
-		end
-
 		local tg = self:getTalentTarget(t)
 		local x, y, target = self:getTarget(tg)
 		if not x or not y then return nil end
@@ -140,7 +128,7 @@ newTalent{
 	requires_target = true,
 	tactical = { ATTACK = { weapon = 2 }, DISABLE = { stun = 2 }, },
 	target = function(self, t) return {type="hit", range=1} end,
-	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") then if not silent then game.logPlayer(self, "You require a steamgun for this talent.") end return false end return true end,
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") or not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun and shield for this talent.") end return false end return true end,
 	getDur = function(self, t) return self:combatTalentLimit(t, 6, 1, 2.5) end,
 	getShieldDamage = function(self, t) return self:combatTalentWeaponDamage(t, 1.2, 1.8) end,
 	getDebuffDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
@@ -189,15 +177,15 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[Fire at an enemy with your steamgun for 100%% weapon damage which critically strikes on hit.
-		Afterwards, perform a shield slam against an adjacent target for %d%% shield damage.
-		The shot target is crippled, reducing melee/spellcasting/mental cast speeds by %d%%; the slammed target is stunned. Both effects last %d turns.
-		The chance to cripple scales with Accuracy, and the chance to stun scales with Physical Power.]]):format(100 * t.getShieldDamage(self, t), 100 * t.getCripplePow(self, t), t.getDebuffDur(self, t))
+		Afterwards, perform a shield slam against an adjacent target (if possible) for %d%% shield damage.
+		The shot target is crippled, reducing melee/spellcasting/mental speed by %d%%; the slammed target is stunned. Both effects last %d turns.
+		Chance to cripple increases with Accuracy, chance to stun increases with Physical Power.]]):format(100 * t.getShieldDamage(self, t), 100 * t.getCripplePow(self, t), t.getDebuffDur(self, t))
 	end,
 }
 
 newTalent{
-	-- Perform a shield slam in an arc in front of the user; then, fire a buckshot round that hits nearby enemies in a cone.
-	-- Slammed targets are pushed back; shot targets are dazed.
+	-- Fire a buckshot round that hits nearby enemies in a cone, then charge along the fired path to deal additional damage.
+	-- Shot targets are dazed. Targets along charge path are stunned instead.
 	name = "Clear the Way",
 	type = {"technique/steamshield", 4},
 	require = techs_dex_req4,
@@ -206,36 +194,90 @@ newTalent{
 	steam = 40,
 	range = 0,
 	radius = function(self, t) return math.floor(self:combatTalentScale(t, 3, 5)) end,
-	radiusB = 1,
 	tactical = { ATTACK = { weapon = 2 }, DISABLE = { stun = 2 }, },
 	target = function(self, t)
-		return {type="cone", range=self:getTalentRange(t), selffire=false, radius=self:getTalentRadius(t)}
+		local weapon, ammo = self:hasArcheryWeapon()
+		return {type = "cone", range = self:getTalentRange(t), radius = self:getTalentRadius(t), selffire = false, talent = t }
 	end,
-	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") then if not silent then game.logPlayer(self, "You require a steamgun for this talent.") end return false end return true end,
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") and not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun for this talent.") end return false end return true end,
+	getDamage = function(self, t) return self:combatTalentWeaponDamage(t, 0.4, 0.72) end,
 	getShieldDamage = function(self, t) return self:combatTalentWeaponDamage(t, 1.2, 1.8) end,
 	getDebuffDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
 	archery_onhit = function(self, t, target, x, y)
 		target:setEffect(target.EFF_DAZED, t.getDebuffDur(self, t), {apply_power=self:combatAttack()})
 	end,
 	action = function(self, t)
+		-- Code salvaged from Scatter Shot (archery), albeit modified. The actual shooting part is conducted after knockback to prevent self-shooting (among other bugs).
 		local tg = self:getTalentTarget(t)
-		local x, y, target = self:getTarget(tg)
-		if not x or not y then return nil end
-		local _ _, x, y = self:canProject(tg, x, y)
+		local x, y = self:getTarget(tg)
+		if not x or not y then return end
+		local targets = {}
+		local add_target = function(x, y)
+			local target = game.level.map(x, y, game.level.map.ACTOR)
+			if target and self:reactionToward(target) < 0 and self:canSee(target) then
+				targets[#targets + 1] = target
+			end
+		end
+		self:project(tg, x, y, add_target)
+		if #targets == 0 then return end
+
+		table.shuffle(targets)
 		
-		local target = game.level.map(x, y, game.level.map.ACTOR)
+		-- Code salvaged from Reckless Charge (cursed/slaughter), albeit modified.
+		local block_actor = function(_, bx, by) return game.level.map:checkEntity(bx, by, Map.TERRAIN, "block_move", target) end
+		local lineFunction = core.fov.line(self.x, self.y, x, y, block_actor)
+		local nextX, nextY, is_corner_blocked = lineFunction:step()
+		local currentX, currentY = self.x, self.y
 		
-		if not target then return end
-		local targets = self:archeryAcquireTargets(tg, {x=target.x, y=target.y})
+		local tiles_moved = 0
+		while nextX and nextY and tiles_moved < self:getTalentRadius(t) do
+			local blockingTarget = game.level.map(nextX, nextY, Map.ACTOR)
+			if blockingTarget and self:reactionToward(blockingTarget) < 0 then
+				local dir = rng.range(0, 8)
+				for i = dir, dir + 8 do
+					local tX = nextX + (i % 3) - 1
+					local tY = nextY + math.floor((i % 9) / 3) - 1
+					if core.fov.distance(currentY, currentX, tX, tY) > 1 and game.level.map:isBound(tX, tY) and not game.level.map:checkAllEntities(tX, tY, "block_move", self) then
+						blockingTarget:move(tX, tY, true)
+						self:attackTargetWith(blockingTarget, shield_combat, nil, t.getShieldDamage(self, t))
+						blockingTarget:setEffect(blockingTarget.EFF_STUNNED, t.getDebuffDur(self, t), {apply_power = self:combatPhysicalpower()})
+						break
+					end
+				end
+			end
+			
+			-- check that we can move
+			if not game.level.map:isBound(nextX, nextY) or game.level.map:checkAllEntities(nextX, nextY, "block_move", self) then break end
+			-- allow the move
+			currentX, currentY = nextX, nextY
+			nextX, nextY, is_corner_blocked = lineFunction:step()
+			self:move(currentX, currentY, true)
+			tiles_moved = tiles_moved + 1
+		end
 		
-		if not targets then return nil end
-		local dam = t.getDamage(self,t)
-		self:archeryShoot(targets, t, {type = "hit", primaryeffect=tg.radius, primarytarget=target}, {mult=dam, one_shot=true, type="steamgun"})		return true
+		-- Fire each shot individually.
+		local old_target_forced = game.target.forced
+		local shot_params_base = {mult = t.getDamage(self, t), phasing = true, type="steamgun"}
+		for i = 1, #targets do
+			local target = targets[i]
+			game.target.forced = {target.x, target.y, target}
+			local targets = self:archeryAcquireTargets({type = "hit"}, {infinite=true, one_shot=true, no_energy = true, type="steamgun"})
+			if targets then
+				local params = table.clone(shot_params_base)
+				local target = targets.dual and targets.main[1] or targets[1]
+				params.phase_target = game.level.map(target.x, target.y, game.level.map.ACTOR)
+				self:archeryShoot(targets, t, {type = "beam"}, params)
+			end
+		end
+
+		game.target.forced = old_target_forced
+		
+		return true
 	end,
 	info = function(self, t)
-		return ([[You viciously swipe your shield in an arc in front of you, dealing %d%% shield damage.
-		Immediately afterwards, you follow up with a custom-made piercing buckshot round, dealing XX damage in a radius-XX cone.
-		Slammed targets are knocked back XX tiles; shot targets are dazed for XX turns.
-		Chance to knockback scales with Strength, while daze chance scales with Accuracy.]]):format(100 * t.getShieldDamage(self, t))
+		return ([[Fire a piercing buckshot which deals %d%% weapon damage and dazes (duration %d) all hit targets in a radius-%d cone.
+		You then charge with your shield, ending up at the same location as where you aimed; targets along the path take %d%% shield damage, are stunned for %d turns, and are knocked to an adjacent tile.
+		Chance to daze increases with Accuracy, chance to stun increases with Physical Power.
+		This ability does not use ammo.]]):format(100 * t.getDamage(self, t), t.getDebuffDur(self, t), self:getTalentRadius(t), 100 * t.getShieldDamage(self, t), t.getDebuffDur(self, t))
 	end,
 }

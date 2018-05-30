@@ -198,8 +198,8 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[Installs an air-purifying catalyzer to the GC-001, causing anything fired from it to emit medicinal fumes.
-		Firing a grenade releases some fumes, granting a stack of Invigoration (max 3). Performing Blastback generates max stacks.
+		Firing a grenade releases some fumes, granting a stack of Invigoration (max 3) for 10 turns. Performing Blastback generates max stacks.
 		
-		Each stack of Invigoration grants +XX health regeneration (max: +XX) and +XX to all saves and powers (max: +XX). Each stack of Invigoration lasts XX turns.]])
+		Each stack of Invigoration grants +XX health regeneration (max: +XX) and +XX to all saves and powers (max: +XX).]])
 	end,
 }
