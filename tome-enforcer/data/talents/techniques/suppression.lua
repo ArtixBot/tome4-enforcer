@@ -88,11 +88,11 @@ newTalent{
 	tactical = { BUFF = 2 },
 	getThreshold = function(self, t)
 		if self:getTalentLevelRaw(t) >= 5 then 
-			return 3
-		elseif self:getTalentLevelRaw(t) >= 3 then
 			return 4
-		else
+		elseif self:getTalentLevelRaw(t) >= 3 then
 			return 5
+		else
+			return 6
 		end
 	end,
 	getDurInc = function(self, t)
@@ -107,7 +107,7 @@ newTalent{
 	info = function(self, t)
 		return ([[Foes under fire stay hunkered down.
 		Once a target reaches %d stacks of Suppressed it has a 25%% chance to fail talent usage and has 90%% reduced movement speed.
-		At talent levels 3 and 5, Suppressed's duration increases by 1.]]):format(t.getThreshold(self, t) + 1)
+		At talent levels 3 and 5, Suppressed's duration increases by 1.]]):format(t.getThreshold(self, t))
 	end,
 }
 

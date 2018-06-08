@@ -43,20 +43,19 @@ newBirthDescriptor{
 		["steamtech/missile-fire"]={true, 0.3},
 		["steamtech/reinforcement"]={false, 0.3},
 		["technique/steamshield"]={true, 0.3},
-		["steamtech/reinforcement"]={true, 0.3},
 		
 		-- Generic skills.
 		["technique/combat-training"]={true, 0.3},
 		["technique/conditioning"]={true, 0.3},
 		["technique/suppression"]={true, 0.3},
 		["steamtech/blacksmith"]={true, 0.2},
+		["cunning/survival"]={false, 0.0},
 	},
 	talents = {
 		[ActorTalents.T_SHOOT] = 1,
 		[ActorTalents.T_ARMOUR_TRAINING] = 2,
 		[ActorTalents.T_WEAPON_COMBAT] = 1,
 		[ActorTalents.T_STEAMGUN_MASTERY] = 1,
-		[ActorTalents.T_PROTECT_AND_SERVE] = 1,
 	},
 	copy = {
 		resolvers.equip{ id=true,

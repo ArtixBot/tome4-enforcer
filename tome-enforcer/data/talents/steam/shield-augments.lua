@@ -59,7 +59,7 @@ newTalent{
 	info = function(self, t)
 		return ([[Dedicate a portion of your steam tank towards constantly reinforcing your shield's tinkers.
 		While active, your block value is increased by +%d.
-		Additionally, whenever you block, melee attackers which fail a physical save will be stunned for %d turns.
+		Whenever you block, melee attackers which fail a physical save will be stunned for %d turns.
 		Effects increase with Steampower.]]):format(t.getBlock(self, t), t.getStunDuration(self, t))
 	end,
 }
@@ -117,7 +117,7 @@ newTalent{
 
 newTalent{
 	-- Sustained ability. When hit, deal fire damage to attacker.
-	-- Blocking emits a scalding-steam nova around you, blinding and disarming targets.
+	-- Blocking emits a scalding-steam nova around you, reducing target accuracy and general speeds.
 	name = "Thermal Reprisal",
 	type = {"steamtech/shield-augments", 3},
 	require = steamreq3,
@@ -164,8 +164,8 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[Destabilizes your heat tank, making it violently react to any sudden impact with a burst of scalding steam.
-		All melee attackers take %d fire damage when they hit you.
-		Additionally, whenever you block, the sudden motion causes scalding steam to erupt around you, reducing the accuracy of adjacent units by %d and their melee, spellcasting, and mental speeds by %d%% for %d turns.
+		Melee attackers take %d fire retaliation damage.
+		Whenever you block, the sudden motion causes an eruption of scalding steam, reducing the accuracy of adjacent units by %d and their melee/spell/mental speeds by %d%% for %d turns.
 		You are immune to the steam's effects (having endured it for so long).
 		Effects increase with Steampower.]]):format(t.getDamageOnMeleeHit(self, t), 6 * self:getTalentLevel(t), t.getCripplePow(self, t)*100, t.getDebuffDur(self, t))
 	end,

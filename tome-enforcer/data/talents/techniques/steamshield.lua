@@ -18,48 +18,45 @@
 -- darkgod@te4.org
 
 newTalent{
-	-- Root self. Increases attack speed, reload rate, and range while active.
-	-- Passively increases Defense and Armor.
+	-- Effectively the Enforcer's take on the Bulwark's Shield Wall talent.
 	name = "Protect and Serve",
 	type = {"technique/steamshield", 1},
-	message = "@Source@ braces for combat!",
 	require = techs_dex_req1,
 	mode = "sustained",
 	points = 5,
 	tactical = { BUFF = 3 },
-	callbackOnRest = function(self, t) self:forceUseTalent(t.id, {ignore_cooldown=true, ignore_energy=true}) end,
-	callbackOnRun = function(self, t) self:forceUseTalent(t.id, {ignore_cooldown=true, ignore_energy=true}) end,
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun and shield to use this talent.") end return false end return true end,
+	getMaxCap = function(self, t) return 100 - (3 * self:getTalentLevelRaw(t)) end,	-- 97/94/91/88/85. Shouldn't be OP.
+	getPercentStr = function(self, t) return 0.20 + self:combatTalentScale(t, 0.0, 0.20) end,
+	getPercentDex = function(self, t) return 0.15 + self:combatTalentScale(t, 0.0, 0.15) end,
 	getPassives = function(self, t) return self:combatTalentStatDamage(t, "str", 6, 22) end,
-	getAtk = function(self, t) return self:combatTalentScale(t, 14, 47) end,
-	getReload = function(self, t) return math.floor(self:combatTalentScale(t, 3, 5, "log")) end,
-	getAttackSpeed = function(self, t) return math.floor(self:combatTalentLimit(t, 50, 15, 45))/100 end,
 	activate = function(self, t)
+		-- Could make this math.floor but it's just 1 point.
+		local dr = math.ceil(t.getPercentStr(self, t) * self:getStr())
+		local cmult = math.ceil(t.getPercentDex(self, t) * self:getDex())
+		
 		local ret = {
-			acc = self:addTemporaryValue('combat_atk', t.getAtk(self, t)),
-			ammo = self:addTemporaryValue('ammo_mastery_reload', t.getReload(self, t)),
-			speed = self:addTemporaryValue("combat_physspeed", t.getAttackSpeed(self, t)),
-			nomove = self:addTemporaryValue("never_move", 1),
+			flat = self:addTemporaryValue("flat_damage_armor", {all = dr}),
+			crit = self:addTemporaryValue("ignore_direct_crits", cmult)
 		}
 		return ret
 	end,
 	deactivate = function(self, t, p)
-		self:removeTemporaryValue("combat_atk", p.acc)
-		self:removeTemporaryValue("ammo_mastery_reload", p.ammo)
-		self:removeTemporaryValue("combat_physspeed", p.speed)
-		self:removeTemporaryValue("never_move", p.nomove)
+		self:removeTemporaryValue("flat_damage_armor", p.flat)
+		self:removeTemporaryValue("ignore_direct_crits", p.crit)
 		return true
 	end,
 	passives = function(self, t, p)
-		self:talentTemporaryValue(p, "combat_armor", t.getPassives(self, t) + 5)
-		self:talentTemporaryValue(p, "combat_def", t.getPassives(self, t) + 5)
+		self:talentTemporaryValue(p, "flat_damage_cap", {all = t.getMaxCap(self, t)})
 	end,
 	info = function(self, t)
-		return ([[Deploy your shield in preparation for the battle ahead, rooting yourself in place.
-		While active, increases your attack speed by %d%%, reload rate by %d, and accuracy by %d.
-		Learning this technique permanently increases Defense and Armor by %d (even while not sustained). These bonuses scale with Strength.
-		This talent is disabled automatically on rest or run.]]):
-		format(t.getAttackSpeed(self, t)*100, t.getReload(self, t), t.getAtk(self, t), t.getPassives(self, t) + 5)
+		local dr = math.ceil(t.getPercentStr(self, t) * self:getStr())
+		local cmult = math.ceil(t.getPercentDex(self, t) * self:getDex())
+		return ([[Enhances your skill with the shield and steamgun.
+		While sustained, you adopt a defensive stance, conferring %d flat damage reduction against all attacks, equivalent to %d%% of your Strength stat.
+		This stance steadies you against critical blows; all direct critical hits against you have %d%% reduced Critical multiplier (but still deal at least normal damage), equivalent to %d%% of your Dexterity stat.
+		Learning this talent steels your resolve; even when not sustained, you can never take a single blow dealing more than %d%% of your max life.]]):
+		format(dr, t.getPercentStr(self, t) * 100, cmult, t.getPercentDex(self, t) * 100, t.getMaxCap(self, t))
 	end,
 }
 
@@ -199,7 +196,7 @@ newTalent{
 		local weapon, ammo = self:hasArcheryWeapon()
 		return {type = "cone", range = self:getTalentRange(t), radius = self:getTalentRadius(t), selffire = false, talent = t }
 	end,
-	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") and not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun for this talent.") end return false end return true end,
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") or not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun for this talent.") end return false end return true end,
 	getDamage = function(self, t) return self:combatTalentWeaponDamage(t, 0.4, 0.72) end,
 	getShieldDamage = function(self, t) return self:combatTalentWeaponDamage(t, 1.2, 1.8) end,
 	getDebuffDur = function(self, t) return math.floor(self:combatTalentScale(t, 2.0, 4.0)) end,
@@ -278,6 +275,6 @@ newTalent{
 		return ([[Fire a piercing buckshot which deals %d%% weapon damage and dazes (duration %d) all hit targets in a radius-%d cone.
 		You then charge with your shield, ending up at the same location as where you aimed; targets along the path take %d%% shield damage, are stunned for %d turns, and are knocked to an adjacent tile.
 		Chance to daze increases with Accuracy, chance to stun increases with Physical Power.
-		This ability does not use ammo.]]):format(100 * t.getDamage(self, t), t.getDebuffDur(self, t), self:getTalentRadius(t), 100 * t.getShieldDamage(self, t), t.getDebuffDur(self, t))
+		This talent does not use ammo.]]):format(100 * t.getDamage(self, t), t.getDebuffDur(self, t), self:getTalentRadius(t), 100 * t.getShieldDamage(self, t), t.getDebuffDur(self, t))
 	end,
 }
