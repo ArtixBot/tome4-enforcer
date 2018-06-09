@@ -164,3 +164,18 @@ newEffect{
 		self:removeTemporaryValue("healing_factor", eff.heal)
 	end,
 }
+
+newEffect{
+	name = "BLAST_MANUEVERS", image = "talents/blast_manuevers.png",
+	desc = "Blast Manuevers",
+	long_desc = function(self, eff)
+		return ("Actively venting steam from using a grenade talent; Blast Manuevers available for use."):format() end,
+	type = "physical",
+	display_desc = function(self, eff) return "Blast Manuevers" end,
+	subtype = { speed=true, tactic=true },
+	status = "beneficial",
+	activate = function(self, eff)
+	end,
+	deactivate = function(self, eff)
+	end,
+}

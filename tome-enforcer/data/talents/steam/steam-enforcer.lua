@@ -17,9 +17,10 @@
 -- Nicolas Casalini "DarkGod"
 -- darkgod@te4.org
 
-newTalentType{ allow_random=true, is_steam=true, type="steamtech/missile-fire", name = "grenades", description = "Utilize a steamtech launcher for widespread crowd-control." }
-newTalentType{ allow_random=true, is_steam=true, type="steamtech/shield-augments", name = "shield augmentation", description = "Reinforce your shield with custom tinkers for improved retaliatory capabilities." }
+newTalentType{ allow_random=true, is_steam=true, type="steamtech/missile-fire", name = "remote launcher", description = "Utilize a steamtech launcher for widespread crowd-control." }
+newTalentType{ allow_random=true, is_steam=true, type="steamtech/shield-augments", name = "shield augments", description = "Reinforce your shield with custom tinkers for improved retaliatory capabilities." }
 newTalentType{ allow_random=true, is_steam=true, type="steamtech/reinforcement", name = "reinforcement", description = "Maintaining order isn't a solo task!" }
+newTalentType{ allow_random=true, is_steam=true, type="steamtech/grenades", name = "grenades", on_mastery_change = function(self, m, tt) if self:knowTalentType("technique/missile-fire") ~= nil then self.talents_types_mastery[tt] = self.talents_types_mastery["technique/missile-fire"] end end, description = "Fire in the hole!" }
 
 steamgun_range = Talents.main_env.archery_range
 

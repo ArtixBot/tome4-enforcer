@@ -30,7 +30,7 @@ newDamageType{
 		local target = game.level.map(x, y, Map.ACTOR)
 		if target then
 			if target:canBe("poison") then
-				target:setEffect(target.EFF_CHEMICAL_GAS, 2, { power=dam.power, heal_factor=dam.heal_factor })
+				target:setEffect(target.EFF_CHEMICAL_GAS, 3, { power=dam.power, heal_factor=dam.heal_factor })
 			end
 		end
 	end,
