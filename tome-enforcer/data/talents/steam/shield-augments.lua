@@ -22,11 +22,11 @@ newTalent{
 	-- When blocking, melee attackers are stunned.
 	name = "Automated Kinetic Defense",
 	type = {"steamtech/shield-augments", 1},
-	require = steamreq1,
+	require = techs_req1,
 	mode = "sustained",
 	points = 5,
 	cooldown = 14,
-	sustain_steam = 15,
+	sustain_steam = 10,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
 	getBlock = function(self, t) return self:combatTalentSteamDamage(t, 20, 150) end,
@@ -40,10 +40,7 @@ newTalent{
 		local ret = {
 			block = self:addTemporaryValue("block_bonus", t.getBlock(self,t)),
 		}
-		if core.shader.active(4) then
-			self:talentParticles(ret, {type="shader_shield", args={toback=true,  size_factor=1, img="rotating_shield"}, shader={type="rotatingshield", noup=2.0, appearTime=0.2}})
-			self:talentParticles(ret, {type="shader_shield", args={toback=false, size_factor=1, img="rotating_shield"}, shader={type="rotatingshield", noup=1.0, appearTime=0.2}})
-		end
+		game:playSoundNear(self, "talents/ice")
 		return ret
 	end,
 	deactivate = function(self, t, p)
@@ -69,11 +66,11 @@ newTalent{
 	-- Blocking now slams your shield down with such force that it disrupts enemies in a radius around you.
 	name = "Thumper Module",
 	type = {"steamtech/shield-augments", 2},
-	require = steamreq2,
+	require = techs_req2,
 	mode = "sustained",
 	points = 5,
 	cooldown = 14,
-	sustain_steam = 15,
+	sustain_steam = 10,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
 	getAvoidPwr = function(self, t) return 3 * self:getTalentLevelRaw(t) end,
@@ -84,7 +81,14 @@ newTalent{
 	activate = function(self, t)
 		local ret = {}
 		self:talentTemporaryValue(ret, "cancel_damage_chance", t.getAvoidPwr(self, t))
+		
+		game:playSoundNear(self, "talents/earth")
+		if core.shader.active(4) then
+			self:talentParticles(ret, {type="vapour_spin", args={radius=1, density=5, size=rng.range(2, 8), life=rng.range(2, 5), smoke="particles_images/smoke_whispery_bright"}})
+		end
+		
 		return ret
+		
 	end,
 	deactivate = function(self, t, p)
 		return true
@@ -120,11 +124,11 @@ newTalent{
 	-- Blocking emits a scalding-steam nova around you, reducing target accuracy and general speeds.
 	name = "Thermal Reprisal",
 	type = {"steamtech/shield-augments", 3},
-	require = steamreq3,
+	require = techs_req3,
 	mode = "sustained",
 	points = 5,
 	cooldown = 14,
-	sustain_steam = 15,
+	sustain_steam = 10,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
 	getDamageOnMeleeHit = function(self, t) return self:combatTalentScale(t, 15, 40) end,
@@ -138,6 +142,8 @@ newTalent{
 			onhit = self:addTemporaryValue("on_melee_hit", {[DamageType.FIRE]=t.getDamageOnMeleeHit(self, t)}),
 			particle = self:addParticles(Particles.new("golden_shield", 1))
 		}
+		
+		game:playSoundNear(self, "talents/fire")
 		return ret
 	end,
 	deactivate = function(self, t, p)
@@ -177,29 +183,25 @@ newTalent{
 	name = "Galvanic Discharge",
 	type = {"steamtech/shield-augments", 4},
 	points = 5,
-	require = steamreq4,
+	require = techs_req4,
 	mode = "sustained",
 	points = 5,
-	cooldown = 24,
-	fixed_cooldown= true,
+	cooldown = 14,
 	range = 8,
-	drain_steam = 22,
+	sustain_steam = 10,
 	tactical = { BUFF=2 },
 	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a weapon and a shield to use this talent.") end return false end return true end,
-	getDamage = function(self, t) return self:combatTalentSteamDamage(t, 65, 140) end,
+	getDamage = function(self, t) return self:combatTalentSteamDamage(t, 100, 225) end,
 	getTargetCount = function(self, t) return 1 end,
 	target = function(self, t)
 		return {type="ball", range=0, radius=1, selffire=false, talent=t}
 	end,
 	activate = function(self, t)
+		game:playSoundNear(self, "talents/lightning")
 		return true
 	end,
 	deactivate = function(self, t, p)
 		return true
-	end,
-	callbackOnActBase = function(self, t)
-		self:forceUseTalent(self.T_BLOCK, {ignore_energy=true, ignore_cd = true, silent = true})
-		return
 	end,
 	callbackOnTalentPost = function(self, t, ab, ret)
 		if ab.id == self.T_BLOCK and ret == true then
@@ -223,17 +225,16 @@ newTalent{
 				if core.shader.active() then game.level.map:particleEmitter(a.x, a.y, tg.radius, "ball_lightning_beam", {radius=tg.radius, tx=x, ty=y}, {type="lightning"})
 				else game.level.map:particleEmitter(a.x, a.y, tg.radius, "ball_lightning_beam", {radius=tg.radius, tx=x, ty=y}) end
 				game.logSeen(self, "#LIGHT_BLUE#%s's shield pulses a bolt of lightning!", self.name:capitalize())
-				game:playSoundNear(self, "talents/lightning")
 			end
+			
+			game:playSoundNear(self, "talents/lightning")
 		end
 		return
 	end,
 	info = function(self, t)
 		local printAutoCd = autoShieldCooldown
-		return ([[Overloads your shield's tinkers, boosting shielding capabilities beyond human capacity.
-		While active, you instantly block at the start of every turn (even if block is on cooldown).
-		Additionally, whenever you block, the installed tinkers burst with power; lightning electrocutes a random enemy within 8 tiles of you.
-		The target and all units adjacent to it take %d lightning damage, scaling with Steampower.
-		Rapidly drains steam while active (-22/turn).]]):format(t.getDamage(self, t))
+		return ([[Overloads your shield's tinkers, boosting shield retaliatory abilities.
+		Whenever you block, the installed tinkers burst with power; lightning electrocutes a random enemy within 8 tiles of you.
+		The target and all units adjacent to it take %d lightning damage, scaling with Steampower.]]):format(t.getDamage(self, t))
 	end,
 }

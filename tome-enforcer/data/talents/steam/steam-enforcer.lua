@@ -24,128 +24,82 @@ newTalentType{ allow_random=true, is_steam=true, type="steamtech/grenades", name
 
 steamgun_range = Talents.main_env.archery_range
 
--- Generic requires for spells based on talent level
-steamreq1 = {
-	stat = { cun=function(level) return 12 + (level-1) * 2 end },
-	level = function(level) return 0 + (level-1)  end,
-}
-steamreq2 = {
-	stat = { cun=function(level) return 20 + (level-1) * 2 end },
-	level = function(level) return 4 + (level-1)  end,
-}
-steamreq3 = {
-	stat = { cun=function(level) return 28 + (level-1) * 2 end },
-	level = function(level) return 8 + (level-1)  end,
-}
-steamreq4 = {
-	stat = { cun=function(level) return 36 + (level-1) * 2 end },
-	level = function(level) return 12 + (level-1)  end,
-}
-steamreq5 = {
-	stat = { cun=function(level) return 44 + (level-1) * 2 end },
-	level = function(level) return 16 + (level-1)  end,
-}
-steamreq_high1 = {
-	stat = { cun=function(level) return 22 + (level-1) * 2 end },
-	level = function(level) return 10 + (level-1)  end,
-}
-steamreq_high2 = {
-	stat = { cun=function(level) return 30 + (level-1) * 2 end },
-	level = function(level) return 14 + (level-1)  end,
-}
-steamreq_high3 = {
-	stat = { cun=function(level) return 38 + (level-1) * 2 end },
-	level = function(level) return 18 + (level-1)  end,
-}
-steamreq_high4 = {
-	stat = { cun=function(level) return 46 + (level-1) * 2 end },
-	level = function(level) return 22 + (level-1)  end,
-}
-steamreq_high5 = {
-	stat = { cun=function(level) return 54 + (level-1) * 2 end },
-	level = function(level) return 26 + (level-1)  end,
-}
-
-str_steamreq1 = {
-	stat = { str=function(level) return 12 + (level-1) * 2 end },
-	level = function(level) return 0 + (level-1)  end,
-}
-str_steamreq2 = {
-	stat = { str=function(level) return 20 + (level-1) * 2 end },
-	level = function(level) return 4 + (level-1)  end,
-}
-str_steamreq3 = {
-	stat = { str=function(level) return 28 + (level-1) * 2 end },
-	level = function(level) return 8 + (level-1)  end,
-}
-str_steamreq4 = {
-	stat = { str=function(level) return 36 + (level-1) * 2 end },
-	level = function(level) return 12 + (level-1)  end,
-}
-str_steamreq5 = {
-	stat = { str=function(level) return 44 + (level-1) * 2 end },
-	level = function(level) return 16 + (level-1)  end,
-}
-str_steamreq_high1 = {
-	stat = { str=function(level) return 22 + (level-1) * 2 end },
-	level = function(level) return 10 + (level-1)  end,
-}
-str_steamreq_high2 = {
-	stat = { str=function(level) return 30 + (level-1) * 2 end },
-	level = function(level) return 14 + (level-1)  end,
-}
-str_steamreq_high3 = {
-	stat = { str=function(level) return 38 + (level-1) * 2 end },
-	level = function(level) return 18 + (level-1)  end,
-}
-str_steamreq_high4 = {
-	stat = { str=function(level) return 46 + (level-1) * 2 end },
-	level = function(level) return 22 + (level-1)  end,
-}
-str_steamreq_high5 = {
-	stat = { str=function(level) return 54 + (level-1) * 2 end },
-	level = function(level) return 26 + (level-1)  end,
-}
-
-dex_steamreq1 = {
+-- Generic requires for techs_dex based on talent level
+techs_dex_req1 = {
 	stat = { dex=function(level) return 12 + (level-1) * 2 end },
 	level = function(level) return 0 + (level-1)  end,
 }
-dex_steamreq2 = {
+techs_dex_req2 = {
 	stat = { dex=function(level) return 20 + (level-1) * 2 end },
 	level = function(level) return 4 + (level-1)  end,
 }
-dex_steamreq3 = {
+techs_dex_req3 = {
 	stat = { dex=function(level) return 28 + (level-1) * 2 end },
 	level = function(level) return 8 + (level-1)  end,
 }
-dex_steamreq4 = {
+techs_dex_req4 = {
 	stat = { dex=function(level) return 36 + (level-1) * 2 end },
 	level = function(level) return 12 + (level-1)  end,
 }
-dex_steamreq5 = {
+techs_dex_req5 = {
 	stat = { dex=function(level) return 44 + (level-1) * 2 end },
 	level = function(level) return 16 + (level-1)  end,
 }
-dex_steamreq_high1 = {
-	stat = { dex=function(level) return 22 + (level-1) * 2 end },
-	level = function(level) return 10 + (level-1)  end,
+
+-- Generic requires for techs_str based on talent level
+techs_str_req1 = {
+	stat = { str=function(level) return 12 + (level-1) * 2 end },
+	level = function(level) return 0 + (level-1)  end,
 }
-dex_steamreq_high2 = {
-	stat = { dex=function(level) return 30 + (level-1) * 2 end },
-	level = function(level) return 14 + (level-1)  end,
+techs_str_req2 = {
+	stat = { str=function(level) return 20 + (level-1) * 2 end },
+	level = function(level) return 4 + (level-1)  end,
 }
-dex_steamreq_high3 = {
-	stat = { dex=function(level) return 38 + (level-1) * 2 end },
-	level = function(level) return 18 + (level-1)  end,
+techs_str_req3 = {
+	stat = { str=function(level) return 28 + (level-1) * 2 end },
+	level = function(level) return 8 + (level-1)  end,
 }
-dex_steamreq_high4 = {
-	stat = { dex=function(level) return 46 + (level-1) * 2 end },
-	level = function(level) return 22 + (level-1)  end,
+techs_str_req4 = {
+	stat = { str=function(level) return 36 + (level-1) * 2 end },
+	level = function(level) return 12 + (level-1)  end,
 }
-dex_steamreq_high5 = {
-	stat = { dex=function(level) return 54 + (level-1) * 2 end },
-	level = function(level) return 26 + (level-1)  end,
+techs_str_req5 = {
+	stat = { str=function(level) return 44 + (level-1) * 2 end },
+	level = function(level) return 16 + (level-1)  end,
+}
+
+-- Generic talents (no stat requirement).
+techs_req1 = {
+	level = function(level) return 0 + (level-1) end,
+}
+techs_req2 = {
+	level = function(level) return 4 + (level-1) end,
+}
+techs_req3 = {
+	level = function(level) return 8 + (level-1) end,
+}
+techs_req4 = {
+	level = function(level) return 12 + (level-1) end,
+}
+techs_req5 = {
+	level = function(level) return 16 + (level-1) end,
+}
+
+-- Generic high level talents (no stat requirement).
+techs_high_req1 = {
+	level = function(level) return 10 + (level-1) end,
+}
+techs_high_req2 = {
+	level = function(level) return 14 + (level-1) end,
+}
+techs_high_req3 = {
+	level = function(level) return 18 + (level-1) end,
+}
+techs_high_req4 = {
+	level = function(level) return 22 + (level-1) end,
+}
+techs_high_req5 = {
+	level = function(level) return 26 + (level-1) end,
 }
 
 load("/data-enforcer/talents/steam/missile-fire.lua")

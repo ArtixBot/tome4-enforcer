@@ -21,12 +21,12 @@ newTalent{
 	-- Deploy a friendly turret. It shoots at enemies within range each turn to apply negative status effects.
 	name = "Riot Turret",
 	type = {"steamtech/reinforcement", 1},
-	require = steamreq1,
+	require = techs_high_req1,
 	range = 1,
 	points = 5,
 	steam = 20,
 	cooldown = 18,
-	tactical = { ATTACKAREA = {LIGHTNING = 2} },
+	tactical = { ATTACK = 2 },
 	requires_target = true,
 	getArmor = function(self, t) return self:combatTalentSteamDamage(t, 5, 75) end,
 	getHP = function(self, t) return self:combatTalentSteamDamage(t, 10, 1000) end,
@@ -90,6 +90,8 @@ newTalent{
 				["technique/suppression"] = -1 + self:getTalentTypeMastery("technique/suppression"),
 			},
 			
+			-- The AI should never perform bump attacks. This doesn't prevent that but it should make it very unlikely.
+			ai_talents = {[Talents.T_SHOOT] = 20, [Talents.T_AREA_DENIAL] = 20},
 			
 			resolvers.equip{
 				{type="weapon", subtype="steamgun", name="iron steamgun", base_list="mod.class.Object:/data-orcs/general/objects/steamgun.lua", autoreq=true, ego_chance=-1000},
@@ -106,6 +108,8 @@ newTalent{
 		m:resolve() m:resolve(nil, true)
 		m:forceLevelup(self.level)
 		game.zone:addEntity(game.level, m, "actor", x, y)
+		
+		game:playSoundNear(self, "talents/teleport")
 		return true
 	end,
 	info = function(self, t)
@@ -123,12 +127,12 @@ newTalent{
 	-- Deploy a friendly thumper. It emits shockwaves each turn which has a 80/20% chance to daze/stun, respectively.
 	name = "Sonic Pulser",
 	type = {"steamtech/reinforcement", 2},
-	require = steamreq2,
+	require = techs_high_req2,
 	range = 6,
 	points = 5,
 	steam = 20,
-	cooldown = 24,
-	tactical = { ATTACKAREA = {LIGHTNING = 2} },
+	cooldown = 18,
+	tactical = { ATTACKAREA = 2, DEBUFF = 3 },
 	requires_target = true,
 	getArmor = function(self, t) return self:combatTalentSteamDamage(t, 10, 100) end,
 	getHP = function(self, t) return self:combatTalentSteamDamage(t, 15, 1250) end,
@@ -182,6 +186,8 @@ newTalent{
 				["steamtech/other"] = -1 + self:getTalentTypeMastery("steamtech/reinforcement"),
 			},
 
+			ai_talents = {[Talents.T_SHOCKWAVE_PULSE] = 20, [Talents.T_DOWNING_PULSE] = 20},
+			
 			summoner = self, summoner_gain_exp=true,
 			summon_time = 11,	-- The ability cast itself takes 1 turn.
 		}
@@ -190,6 +196,8 @@ newTalent{
 		m:resolve() m:resolve(nil, true)
 		m:forceLevelup(self.level)
 		game.zone:addEntity(game.level, m, "actor", x, y)
+		
+		game:playSoundNear(self, "talents/teleport")
 		return true
 	end,
 	info = function(self, t)
@@ -206,11 +214,11 @@ newTalent{
 	-- Deploy a friendly turret which fires arcing bolts of lightning with a 25% chance to strip beneficial effects from hit targets.
 	name = "Tesla Sentinel",
 	type = {"steamtech/reinforcement", 3},
-	require = steamreq3,
+	require = techs_high_req3,
 	points = 5,
-	cooldown = 24,
-	steam = 15,
-	tactical = { BUFF=2 },
+	cooldown = 18,
+	steam = 20,
+	tactical = { ATTACKAREA = {LIGHTNING = 2} },
 	getArmor = function(self, t) return self:combatTalentSteamDamage(t, 6, 65) end,
 	getHP = function(self, t) return self:combatTalentSteamDamage(t, 8, 800) end,
 	getDamage = function(self, t) return self:combatTalentSteamDamage(t, 12, 150) end, -- For info.
@@ -266,6 +274,8 @@ newTalent{
 				["steamtech/other"] = -1 + self:getTalentTypeMastery("steamtech/reinforcement"),
 			},
 			
+			ai_talents = {[Talents.T_VOLTAIC_CHAINBOLT] = 20, [Talents.T_LEVIN_CHAINBOLT] = 20},
+			
 			summoner = self, summoner_gain_exp=true,
 			summon_time = 11,	-- The ability cast itself takes 1 turn.
 		}
@@ -276,6 +286,8 @@ newTalent{
 		m:resolve() m:resolve(nil, true)
 		m:forceLevelup(self.level)
 		game.zone:addEntity(game.level, m, "actor", x, y)
+		
+		game:playSoundNear(self, "talents/teleport")
 		return true
 	end,
 	info = function(self, t)
@@ -294,7 +306,7 @@ newTalent{
 	name = "Masterful Craftsmanship",
 	type = {"steamtech/reinforcement", 4},
 	points = 5,
-	require = steamreq4,
+	require = techs_high_req4,
 	mode = "passive",
 	getRetal = function(self, t) return self:combatTalentScale(t, 15, 35) end,	-- Not sure how to grab stats of a talent assigned to a different unit altogether, so just copying over these.
 	getThreshold = function(self, t) return self:combatTalentLimit(t, 50, 95, 65), 1 end,
@@ -519,7 +531,7 @@ newTalent{
 	name = "Reactive Armor",
 	type = {"steamtech/other", 1},
 	points = 5,
-	require = steamreq4,
+	require = techs_high_req4,
 	mode = "passive",
 	getRetal = function(self, t) return self:combatTalentScale(t, 15, 35) end,
 	getThreshold = function(self, t) return self:combatTalentLimit(t, 50, 95, 65), 1 end,

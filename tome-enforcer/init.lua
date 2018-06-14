@@ -20,11 +20,17 @@
 long_name = "The Enforcer"
 short_name = "enforcer"
 for_module = "tome"
-version = {1,5,4}
+version = {1,5,10}
+addon_version = {1,0,4}
 weight = 2500
 author = { "ArtixBot" }
 homepage = "artixbot.github.io"
-description = [[Adds the Enforcer. Armed with shield and steamgun, the Enforcer utilizes suppressive fire and crafted grenades of all types to permanently remove foes.]]
+description = [[Adds the Enforcer. Armed with shield and steamgun, the Enforcer utilizes suppressive fire and crafted grenades of all types to permanently remove foes.
+The class has twenty new talents split into five trees: Suppression, Reinforcement, Remote Launcher, Steamshield Combat, and Shield Augments.
+
+Talent icons are from http://game-icons.net/, class icon is from https://opengameart.org/content/painterly-spell-icons-part-1.
+]]
+tags = {'class', 'enforcer', 'steamgun', 'steamguns', 'grenade', 'shield', 'tinker', 'new class', 'ranged'}
 overload = true
 superload = true
 hooks = true

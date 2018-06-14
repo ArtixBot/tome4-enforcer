@@ -108,7 +108,7 @@ newEffect{
 		old_eff.dmgdown = self:addTemporaryValue("inc_damage", {all = -old_eff.dmg*stackCount})
 		
 		if old_eff.threshold > 0 and old_eff.stacks >= old_eff.threshold then
-			old_eff.tmpid = self:addTemporaryValue("movement_speed", -80)
+			old_eff.tmpid = self:addTemporaryValue("movement_speed", -0.80)
 			old_eff.failid = self:addTemporaryValue("talent_fail_chance", 25)
 		end
 		
@@ -127,7 +127,7 @@ newEffect{
 		eff.accint = self:addTemporaryValue("combat_atk", -eff.acc*eff.stacks)
 		eff.dmgdown = self:addTemporaryValue("inc_damage", {all = -eff.dmg*eff.stacks})
 		if eff.threshold > 0 and eff.stacks >= eff.threshold then
-			eff.tmpid = self:addTemporaryValue("movement_speed", -80)
+			eff.tmpid = self:addTemporaryValue("movement_speed", -0.80)
 			eff.failid = self:addTemporaryValue("talent_fail_chance", 25)
 		end
 	end,

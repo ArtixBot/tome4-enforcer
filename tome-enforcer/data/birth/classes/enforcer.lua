@@ -24,31 +24,36 @@ newBirthDescriptor{
 	type = "subclass",
 	name = "Enforcer",
 	desc = {
-		"Enforcers master the steamgun and shield to keep the peace.",
+		"The Spellblaze brought about chaos and ruin to the remnants of civilization.",
+		"Enforcers were needed to maintain a semblance of peace and order, utilizing steamgun and shield.",
 		"They sacrifice raw burst power and mobility for excellent survivability and crowd control.",
-		"Their most important stats are: Strength and Dexterity.",
+		"Their most important stats are: Strength, Dexterity, and Cunning.",
 		"#GOLD#Stat modifiers:",
-		"#LIGHT_BLUE# * +4 Strength, +4 Dexterity, +0 Constitution",
-		"#LIGHT_BLUE# * +0 Magic, +0 Willpower, +1 Cunning",
-		"#GOLD#Life per level:#LIGHT_BLUE# 4",
+		"#LIGHT_BLUE# * +3 Strength, +3 Dexterity, +0 Constitution",
+		"#LIGHT_BLUE# * +0 Magic, +0 Willpower, +3 Cunning",
+		"#GOLD#Life per level:#LIGHT_BLUE# +4",
 	},
 	locked = function(birther) return birther:isDescriptorSet("world", "Orcs") or profile.mod.allow_build.orcs_tinker_eyal end,
 	locked_desc = "Law and order will be enforced with shield and steamgun!",
 	power_source = {steam=true, stamina=true},
-	stats = { str=4, dex=3, con=2, },
+	stats = { str=3, dex=3, cun=3, },
 	talents_types = {
 		-- Class skills.
+		["technique/shield-defense"]={true, 0.3},
 		["steamtech/gunner-training"]={true, 0.3},
 		["steamtech/shield-augments"]={true, 0.3},
 		["steamtech/missile-fire"]={true, 0.3},
-		["steamtech/reinforcement"]={false, 0.3},
 		["technique/steamshield"]={true, 0.3},
+		["technique/warcries"]={false, 0.3},
+		["steamtech/reinforcement"]={false, 0.3},
 		
 		-- Generic skills.
 		["technique/combat-training"]={true, 0.3},
-		["technique/conditioning"]={true, 0.3},
 		["technique/suppression"]={true, 0.3},
+		["steamtech/chemistry"]={true, 0.0},
+		["steamtech/physics"]={true, 0.0},
 		["steamtech/blacksmith"]={true, 0.2},
+		["technique/conditioning"]={false, 0.3},
 		["cunning/survival"]={false, 0.0},
 	},
 	talents = {
@@ -56,6 +61,7 @@ newBirthDescriptor{
 		[ActorTalents.T_ARMOUR_TRAINING] = 2,
 		[ActorTalents.T_WEAPON_COMBAT] = 1,
 		[ActorTalents.T_STEAMGUN_MASTERY] = 1,
+		[ActorTalents.T_PROTECT_AND_SERVE] = 1,
 	},
 	copy = {
 		resolvers.equip{ id=true,
@@ -65,13 +71,11 @@ newBirthDescriptor{
 			{type="armor", subtype="head", name="rough leather hat", autoreq=true, ego_chance=-1000, ego_chance=-1000},
 			{type="armor", subtype="heavy", name="iron mail armour", autoreq=true, ego_chance=-1000, ego_chance=-1000}
 		},
+		resolvers.generic(function(e)
+			e.auto_shoot_talent = e.T_SHOOT
+		end),
 	},
 	copy_add = {
 		life_rating = 4,
-	},
-	party_copy = {
-		known_tinkers = {
-			PAIN_SUPPRESSOR_SALVE = true,
-		}
 	},
 }

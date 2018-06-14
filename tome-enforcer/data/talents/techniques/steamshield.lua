@@ -21,29 +21,34 @@ newTalent{
 	-- Effectively the Enforcer's take on the Bulwark's Shield Wall talent.
 	name = "Protect and Serve",
 	type = {"technique/steamshield", 1},
-	require = techs_dex_req1,
+	require = techs_str_req1,
 	mode = "sustained",
 	points = 5,
 	tactical = { BUFF = 3 },
-	on_pre_use = function(self, t, silent) if not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun and shield to use this talent.") end return false end return true end,
-	getMaxCap = function(self, t) return 100 - (3 * self:getTalentLevelRaw(t)) end,	-- 97/94/91/88/85. Shouldn't be OP.
+	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") or not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun and shield for this talent.") end return false end return true end,
+	getMaxCap = function(self, t) return 100 - (6 * self:getTalentLevelRaw(t)) end,	-- 94/88/82/76/70. It's only against singular blows, so shouldn't be OP.
 	getPercentStr = function(self, t) return 0.20 + self:combatTalentScale(t, 0.0, 0.20) end,
 	getPercentDex = function(self, t) return 0.15 + self:combatTalentScale(t, 0.0, 0.15) end,
 	getPassives = function(self, t) return self:combatTalentStatDamage(t, "str", 6, 22) end,
 	activate = function(self, t)
 		-- Could make this math.floor but it's just 1 point.
 		local dr = math.ceil(t.getPercentStr(self, t) * self:getStr())
-		local cmult = math.ceil(t.getPercentDex(self, t) * self:getDex())
+		local amult = math.ceil(t.getPercentDex(self, t) * self:getDex())
+		local aprmult = math.ceil(amult * 0.5)
 		
 		local ret = {
 			flat = self:addTemporaryValue("flat_damage_armor", {all = dr}),
-			crit = self:addTemporaryValue("ignore_direct_crits", cmult)
+			acc = self:addTemporaryValue("combat_atk", amult),
+			apr = self:addTemporaryValue("combat_apr", aprmult),
+			crit = self:addTemporaryValue("combat_physcrit", -10)
 		}
 		return ret
 	end,
 	deactivate = function(self, t, p)
 		self:removeTemporaryValue("flat_damage_armor", p.flat)
-		self:removeTemporaryValue("ignore_direct_crits", p.crit)
+		self:removeTemporaryValue("combat_atk", p.acc)
+		self:removeTemporaryValue("combat_apr", p.apr)
+		self:removeTemporaryValue("combat_physcrit", p.crit)
 		return true
 	end,
 	passives = function(self, t, p)
@@ -51,12 +56,14 @@ newTalent{
 	end,
 	info = function(self, t)
 		local dr = math.ceil(t.getPercentStr(self, t) * self:getStr())
-		local cmult = math.ceil(t.getPercentDex(self, t) * self:getDex())
-		return ([[Enhances your skill with the shield and steamgun.
-		While sustained, you adopt a defensive stance, conferring %d flat damage reduction against all attacks, equivalent to %d%% of your Strength stat.
-		This stance steadies you against critical blows; all direct critical hits against you have %d%% reduced Critical multiplier (but still deal at least normal damage), equivalent to %d%% of your Dexterity stat.
-		Learning this talent steels your resolve; even when not sustained, you can never take a single blow dealing more than %d%% of your max life.]]):
-		format(dr, t.getPercentStr(self, t) * 100, cmult, t.getPercentDex(self, t) * 100, t.getMaxCap(self, t))
+		local amult = math.ceil(t.getPercentDex(self, t) * self:getDex())
+		local apr = math.ceil(t.getPercentDex(self, t) * self:getDex() * 0.5)
+		return ([[Adopt a methodical, steady stance, promoting measured responses to any scenario.
+		#YELLOW#While sustained#WHITE#: Confers %d flat damage reduction against all attacks, equivalent to %d%% of your Strength stat.
+		Confers +%d Accuracy and +%d armor penetration towards all physical attacks, equivalent to %d%% and %d%% of your Dexterity stat, respectively.
+		Your physical critical chance is reduced by 10%%.
+		#GREY#Passive effect#WHITE#: You can never take a single blow dealing more than %d%% of your max life.]]):
+		format(dr, t.getPercentStr(self, t) * 100, amult, apr, t.getPercentDex(self, t) * 100, t.getPercentDex(self, t) * 50, t.getMaxCap(self, t))
 	end,
 }
 
@@ -65,17 +72,16 @@ newTalent{
 	-- Immediately guard afterwards, even if on cooldown.
 	name = "Circle Fire",
 	type = {"technique/steamshield", 2},
-	require = techs_dex_req2,
+	require = techs_str_req2,
 	points = 5,
 	cooldown = 14,
 	steam = 25,
-	range = 0,
 	radius = 1,
 	tactical = { ATTACKAREA = { weapon = 3 } },
 	random_ego = "attack",
 	target = function(self, t)
 		local weapon, ammo = self:hasArcheryWeapon()
-		return {type="ball", radius=self:getTalentRadius(t), range=self:getTalentRange(t), selffire=false, display=self:archeryDefaultProjectileVisual(weapon, ammo)}
+		return {type="ball", radius=self:getTalentRadius(t), range=0, selffire=false, display=self:archeryDefaultProjectileVisual(weapon, ammo)}
 	end,
 	on_pre_use = function(self, t, silent) if not self:hasArcheryWeapon("steamgun") or not self:hasShield() then if not silent then game.logPlayer(self, "You require a steamgun and shield for this talent.") end return false end return true end,
 	getDamage = function(self, t) return self:combatTalentWeaponDamage(t, 0.6, 0.9) end,
@@ -105,7 +111,7 @@ newTalent{
 		return true
 	end,
 	info = function(self, t)
-		return ([[Rapidly fire your weapon, performing a basic ranged shot against all adjacent enemies for %d%% weapon damage.
+		return ([[Rapidly fire your weapon against all adjacent enemies for %d%% weapon damage.
 		This startles them, which pushes them back %d tiles if they fail a mental save.
 		Immediately afterwards, you instantly enter a blocking stance (even if Block is on cooldown).
 		Chance to push enemies increases with Accuracy.]]):format(t.getDamage(self, t)*100, t.getKnockback(self, t))
@@ -120,7 +126,7 @@ newTalent{
 	points = 5,
 	cooldown = 10,
 	steam = 25,
-	require = techs_dex_req3,
+	require = techs_str_req3,
 	range = steamgun_range,
 	requires_target = true,
 	tactical = { ATTACK = { weapon = 2 }, DISABLE = { stun = 2 }, },
@@ -185,9 +191,9 @@ newTalent{
 	-- Shot targets are dazed. Targets along charge path are stunned instead.
 	name = "Clear the Way",
 	type = {"technique/steamshield", 4},
-	require = techs_dex_req4,
+	require = techs_str_req4,
 	points = 5,
-	cooldown = 10,
+	cooldown = 16,
 	steam = 40,
 	range = 0,
 	radius = function(self, t) return math.floor(self:combatTalentScale(t, 3, 5)) end,

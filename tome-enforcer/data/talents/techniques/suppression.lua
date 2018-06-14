@@ -27,7 +27,6 @@ newTalent{
 	require = techs_dex_req1,
 	mode = "passive",
 	points = 5,
-	tactical = { BUFF = 3 },
 	getSaves = function(self, t) return math.ceil(self:getTalentLevelRaw(t) / 1.5) end,
 	getAcc = function(self, t) return math.ceil(self:getTalentLevelRaw(t) / 2) end,
 	getDef = function(self, t) return math.ceil(self:getTalentLevelRaw(t) / 2) end,
@@ -69,7 +68,6 @@ newTalent{
 	require = techs_dex_req2,
 	points = 5,
 	mode = "passive",
-	tactical = { BUFF = 2},
 	getReduction = function(self, t) return self:getTalentLevelRaw(t) end,
 	info = function(self, t)
 		return ([[Incoming fire overwhelms your target.
@@ -85,7 +83,6 @@ newTalent{
 	points = 5,
 	mode = "passive",
 	require = techs_dex_req3,
-	tactical = { BUFF = 2 },
 	getThreshold = function(self, t)
 		if self:getTalentLevelRaw(t) >= 5 then 
 			return 4
@@ -106,7 +103,7 @@ newTalent{
 	end,
 	info = function(self, t)
 		return ([[Foes under fire stay hunkered down.
-		Once a target reaches %d stacks of Suppressed it has a 25%% chance to fail talent usage and has 90%% reduced movement speed.
+		Once a target reaches %d stacks of Suppressed it has a 25%% chance to fail talent usage and has 80%% reduced movement speed.
 		At talent levels 3 and 5, Suppressed's duration increases by 1.]]):format(t.getThreshold(self, t))
 	end,
 }
@@ -118,7 +115,6 @@ newTalent{
 	require = techs_dex_req4,
 	points = 5,
 	mode = "passive",
-	tactical = { BUFF = 2 },
 	getThreshold = function(self, t) return 5 - math.floor(self:getTalentLevelRaw(t) / 2) end,
 	getCooldown = function(self, t) return 2 + math.floor(self:getTalentLevelRaw(t) / 2) end,
 	getChance = function(self, t) return math.ceil(self:getTalentLevelRaw(t) / 2) end,
